@@ -6,26 +6,30 @@ let config = {};
 
 config[SCIHUB_URL] = DEFAULT_SCIHUB_URL;
 
-function openSciHubPdf() {
-  // Get current path
-  browser.tabs.query({currentWindow: true, active: true})
-    .then((tabs) => {
-      if(tabs.length > 0) {
-        // Get the CURRENT_URL configuration
-        storage.get(config, function (config) {
-          current_active_url = tabs[0].url
-          browser.tabs.create({
-            url: config[SCIHUB_URL] + '/' + current_active_url,
-          });
-        })
-      }
-  })
+function openSciHubPdf(tab, url) {
+
+  if (tab.active) {
+    // Get the CURRENT_URL configuration
+    storage.get(config, function (config) {
+      browser.tabs.create({
+        url: config[SCIHUB_URL] + '/' + url,
+      });
+    })
+  }
 }
 
-function updateCurrentPage(details) {
-  let config = {};
-  config[CURRENT_URL] = details.url;
-  return storage.set(config);
-}
+browser.browserAction.onClicked.addListener((tab) => openSciHubPdf(tab, tab.url));
 
-browser.browserAction.onClicked.addListener(openSciHubPdf);
+browser.menus.create({
+  id: "open-page",
+  contexts: ["page"],
+  title: "Open page in SciHub",
+  onclick: (info, tab) => openSciHubPdf(tab, info.pageUrl)
+});
+
+browser.menus.create({
+  id: "open-link",
+  contexts: ["link"],
+  title: "Open link in SciHub",
+  onclick: (info, tab) => openSciHubPdf(tab, info.linkUrl)
+});
